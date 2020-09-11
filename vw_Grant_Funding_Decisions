@@ -1,12 +1,24 @@
+USE [UKRIGrants_Reporting]
+GO
+
+/****** Object:  View [dbo].[vw_Grant_Funding_Decisions]    Script Date: 11/09/2020 14:55:52 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER VIEW [dbo].[vw_Grant_Funding_Decisions]
+AS
 SELECT        UKRIGrants.dbo.[Grant].GrantReference, UKRIGrants.dbo.[Grant].Owner AS Council, UKRIGrants.dbo.[Grant].Title, UKRIGrants.dbo.[Grant].ROID, CASE WHEN HESA_OrgName IS NULL 
                          THEN ROName ELSE HESA_OrgName END AS Research_Organisation, UKRIGrants.dbo.[Grant].ParentGrant, UKRIGrants.dbo.[Grant].LeadJointFunder, UKRIGrants.dbo.[Grant].TotalAuthorised, 
                          UKRIGrants.dbo.[Grant].TotalAppliedFor, UKRIGrants.dbo.[Grant].GrantCategory, UKRIGrants.dbo.[Grant].Scheme, UKRIGrants.dbo.[Grant].Call, CASE WHEN [Status] IN ('In Progress', 'Returned', 'Referred', 'Deferred') 
                          THEN 'In Progress' WHEN [Status] = 'RO Withdrawn' THEN 'RO Withdrawn' WHEN [Status] = 'Rejected' THEN 'Rejected' WHEN [Status] IN ('Accepted', 'Active', 'Approved', 'Authorised', 'Closed', 'Grant Suspended', 'Held Over', 
                          'In Transfer', 'Payments Suspended', 'Preparing', 'Suspended Pending Activation', 'Terminating') THEN 'Successful' ELSE [Status] END AS GrantStatus, UKRIGrants.dbo.[Grant].RejectionReason, 
                          UKRIGrants.dbo.GrantMeetingList.MeetingName, UKRIGrants.dbo.GrantMeetingList.Rank, UKRIGrants.dbo.GrantMeetingList.MeetingOutcome, UKRIGrants.dbo.GrantMeetingList.OverallScore, 
-                         CASE WHEN [Grant].AuthorisedDate IS NULL THEN (CASE WHEN [Grant].LatestRejectionDate IS NULL THEN [Grant].CommunicateDecisionDate ELSE [Grant].LatestRejectionDate END) 
-                         ELSE [Grant].AuthorisedDate END AS DecisionDate, dbo.OrganisationHEIs.UKPRN, CASE WHEN HESA_OrgName IS NULL THEN Organisation.PostCode ELSE OrganisationHEIs.PostCode END AS PostCode, 
-                         CASE WHEN HESA_OrgType IS NULL THEN OrganisationType ELSE HESA_OrgType END AS OrgType
+                         UKRIGrants.dbo.Organisation.OrganisationType, CASE WHEN [Grant].AuthorisedDate IS NULL THEN (CASE WHEN [Grant].LatestRejectionDate IS NULL 
+                         THEN [Grant].CommunicateDecisionDate ELSE [Grant].LatestRejectionDate END) ELSE [Grant].AuthorisedDate END AS DecisionDate, dbo.OrganisationHEIs.UKPRN, CASE WHEN HESA_OrgName IS NULL 
+                         THEN Organisation.PostCode ELSE OrganisationHEIs.PostCode END AS PostCode, dbo.OrganisationHEIs.HESA_OrgType
 FROM            UKRIGrants.dbo.[Grant] INNER JOIN
                          UKRIGrants.dbo.Organisation ON UKRIGrants.dbo.[Grant].ROID = UKRIGrants.dbo.Organisation.OrganisationID LEFT OUTER JOIN
                          dbo.OrganisationHEIs ON UKRIGrants.dbo.Organisation.OrganisationID = dbo.OrganisationHEIs.OBIEE_OrgID LEFT OUTER JOIN
@@ -22,3 +34,4 @@ WHERE        (CASE WHEN [Status] IN ('In Progress', 'Returned', 'Referred', 'Def
                          UKRIGrants.dbo.[Grant].GrantCategory = N'Fellowship') AND (UKRIGrants.dbo.[Grant].TransferInd = 0) AND (CASE WHEN [Grant].AuthorisedDate IS NULL THEN (CASE WHEN [Grant].LatestRejectionDate IS NULL 
                          THEN [Grant].CommunicateDecisionDate ELSE [Grant].LatestRejectionDate END) ELSE [Grant].AuthorisedDate END >= '2014-04-01') AND (CASE WHEN [Grant].AuthorisedDate IS NULL 
                          THEN (CASE WHEN [Grant].LatestRejectionDate IS NULL THEN [Grant].CommunicateDecisionDate ELSE [Grant].LatestRejectionDate END) ELSE [Grant].AuthorisedDate END <= '2018-03-31')
+GO
